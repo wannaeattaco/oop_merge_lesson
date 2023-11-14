@@ -15,6 +15,24 @@ with open(os.path.join(__location__, 'Countries.csv')) as f:
     for r in rows:
         countries.append(dict(r))
 
+players = []
+with open(os.path.join(__location__, 'Players.csv')) as f:
+    rows = csv.DictReader(f)
+    for r in rows:
+        players.append(dict(r))
+
+teams = []
+with open(os.path.join(__location__, 'Teams.csv')) as f:
+    rows = csv.DictReader(f)
+    for r in rows:
+        teams.append(dict(r))
+
+titanic = []
+with open(os.path.join(__location__, 'Titanic.csv')) as f:
+    rows = csv.DictReader(f)
+    for r in rows:
+        titanic.append(dict(r))
+
 class DB:
     def __init__(self):
         self.database = []
@@ -73,11 +91,17 @@ class Table:
 
 table1 = Table('cities', cities)
 table2 = Table('countries', countries)
+table3 = Table('players', players)
+table4 = Table('teams', teams)
+table5 = Table('titanic', titanic)
 my_DB = DB()
 my_DB.insert(table1)
 my_DB.insert(table2)
-my_table1 = my_DB.search('cities')
+my_DB.insert(table3)
+my_DB.insert(table4)
+my_DB.insert(table5)
 
+my_table1 = my_DB.search('cities')
 print("Test filter: only filtering out cities in Italy") 
 my_table1_filtered = my_table1.filter(lambda x: x['country'] == 'Italy')
 print(my_table1_filtered)
@@ -100,6 +124,7 @@ print(my_table1_filtered.aggregate(lambda x: sum(x)/len(x), 'temperature'))
 print()
 
 print("Test join: finding cities in non-EU countries whose temperatures are below 5.0")
+
 my_table2 = my_DB.search('countries')
 my_table3 = my_table1.join(my_table2, 'country')
 my_table3_filtered = my_table3.filter(lambda x: x['EU'] == 'no').filter(lambda x: float(x['temperature']) < 5.0)
@@ -121,3 +146,25 @@ for item in my_table2.table:
     if len(my_table1_filtered.table) >= 1:
         print(item['country'], my_table1_filtered.aggregate(lambda x: min(x), 'latitude'), my_table1_filtered.aggregate(lambda x: max(x), 'latitude'))
 print()
+
+my_table3 = my_DB.search('players')
+# What player on a team with “ia” in the team name played less than 200 minutes and made more than 100 passes? Select to display the player surname, team, and position
+my_filtered_table = my_table3.filter(lambda x: 'ia' in x['team'] and float(x['minutes']) < 200.0 and float(x['passes']) > 100.0)
+print(my_filtered_table.select(['surname', 'team', 'position']))
+
+# The average number of games played for teams ranking below 10 versus teams ranking above or equal 10
+my_table4 = my_DB.search('teams')
+my_avg_1 = my_table4.filter(lambda x: float(x['ranking']) < 10).aggregate(lambda x: sum(x)/len(x), 'games')
+my_avg_2 = my_table4.filter(lambda x: float(x['ranking']) >= 10).aggregate(lambda x: sum(x)/len(x), 'games')
+print("Ranking < 10:", my_avg_1, "Rankin >= 10:", my_avg_2)
+
+# The average number of passes made by forwards versus by midfielders
+my_avg_1 = my_table3.filter(lambda x: x['position'] == 'forward').aggregate(lambda x: sum(x)/len(x), 'passes')
+my_avg_2 = my_table3.filter(lambda x: x['position'] == 'midfielder').aggregate(lambda x: sum(x)/len(x), 'passes')
+print("Forward:", my_avg_1, "Midfielder:", my_avg_2)
+
+# The average fare paid by passengers in the first class versus in the third class
+my_table5 = my_DB.search('titanic')
+my_avg_1 = my_table5.filter(lambda x: x['class'] == '1').aggregate(lambda x: sum(x)/len(x), 'fare')
+my_avg_2 = my_table5.filter(lambda x: x['class'] == '3').aggregate(lambda x: sum(x)/len(x), 'fare')
+print("First class:", my_avg_1, "Third class:", my_avg_2)
