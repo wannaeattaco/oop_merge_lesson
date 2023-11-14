@@ -168,3 +168,7 @@ my_table5 = my_DB.search('titanic')
 my_avg_1 = my_table5.filter(lambda x: x['class'] == '1').aggregate(lambda x: sum(x)/len(x), 'fare')
 my_avg_2 = my_table5.filter(lambda x: x['class'] == '3').aggregate(lambda x: sum(x)/len(x), 'fare')
 print("First class:", my_avg_1, "Third class:", my_avg_2)
+
+# Find the total number of male passengers embarked at Southampton
+my_filtered_table = my_table5.filter(lambda x: x['embarked'] == 'Southampton' and x['gender'] == 'M')
+print("Total number is", len(my_filtered_table.table))
